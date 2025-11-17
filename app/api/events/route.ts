@@ -1,4 +1,3 @@
- 
 import { v2 as cloudinary } from "cloudinary";
 import { NextRequest, NextResponse } from "next/server";
 import Event from '@/database/event.model';
@@ -13,7 +12,6 @@ export async function POST(req: NextRequest) {
     let event;
     try {
       event = Object.fromEntries(formData.entries());
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (e) {
       return NextResponse.json(
         { message: "Invalid form data" },
@@ -21,6 +19,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // IMAGE
     const file = formData.get("image") as File;
     if (!file)
       return NextResponse.json(
@@ -28,10 +27,8 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
 
-    // SAFE TAGS + AGENDA PARSING
+    // TAGS
     const rawTags = formData.get("tags");
-    const rawAgenda = formData.get("agenda");
-
     const tags =
       typeof rawTags === "string"
         ? rawTags.startsWith("[")
@@ -39,6 +36,8 @@ export async function POST(req: NextRequest) {
           : rawTags.split(",").map((i) => i.trim())
         : [];
 
+    // AGENDA
+    const rawAgenda = formData.get("agenda");
     const agenda =
       typeof rawAgenda === "string"
         ? rawAgenda.startsWith("[")
@@ -46,11 +45,30 @@ export async function POST(req: NextRequest) {
           : rawAgenda.split(",").map((i) => i.trim())
         : [];
 
-    // Convert File → Buffer
+    // ✅ MODE — 100% typesafe fix (no more TS2339)
+    const modeValue = formData.get("mode");
+    const rawMode =
+      typeof modeValue === "string"
+        ? modeValue.toLowerCase().trim()
+        : "";
+
+    if (rawMode.includes("hybrid")) {
+      event.mode = "hybrid";
+    } else if (rawMode.includes("online") && !rawMode.includes("in-person")) {
+      event.mode = "online";
+    } else if (rawMode.includes("offline") || rawMode.includes("in-person")) {
+      event.mode = "offline";
+    } else {
+      return NextResponse.json(
+        { message: "Invalid mode. Use online, offline, or hybrid" },
+        { status: 400 }
+      );
+    }
+
+    // IMAGE UPLOAD
     const arrayBuffer = await file.arrayBuffer();
     const buffer = Buffer.from(arrayBuffer);
 
-    // Upload to Cloudinary
     const uploadResult = await new Promise((resolve, reject) => {
       cloudinary.uploader
         .upload_stream(
@@ -65,7 +83,7 @@ export async function POST(req: NextRequest) {
 
     event.image = (uploadResult as { secure_url: string }).secure_url;
 
-    // Create event in DB
+    // CREATE EVENT
     const createdEvent = await Event.create({
       ...event,
       tags,
@@ -76,13 +94,10 @@ export async function POST(req: NextRequest) {
       { message: "Event created successfully", event: createdEvent },
       { status: 201 }
     );
-  } catch (e:unknown) {
+  } catch (e: unknown) {
     console.error(e);
     return NextResponse.json(
-      {
-        message: "Event Creation Failed",
-        error: e || "Unknown",
-      },
+      { message: "Event Creation Failed", error: e || "Unknown" },
       { status: 500 }
     );
   }
