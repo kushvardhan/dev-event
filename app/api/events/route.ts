@@ -1,11 +1,11 @@
-import {v2 as cloudinary} from 'cloudinary';
-import { Event } from "@/database";
-import { connectDB } from "@/lib/mongodb";
-import { NextRequest, NextResponse } from "next/server";
+import { v2 as cloudinary } from 'cloudinary';
+import {NextRequest, NextResponse} from "next/server";
+import Event from '@/database/event.model';
+import { connectDB } from '@/lib/mongodb';
 
-export async function POST(req:NextRequest){
-    try{
-       await connectDB();
+export async function POST(req: NextRequest) {
+    try {
+        await connectDB();
 
         const formData = await req.formData();
 
@@ -21,14 +21,14 @@ export async function POST(req:NextRequest){
 
         if(!file) return NextResponse.json({ message: 'Image file is required'}, { status: 400 })
 
-        const tags = JSON.parse(formData.get('tags') as string);
-        const agenda = JSON.parse(formData.get('agenda') as string);
+        let tags = JSON.parse(formData.get('tags') as string);
+        let agenda = JSON.parse(formData.get('agenda') as string);
 
         const arrayBuffer = await file.arrayBuffer();
         const buffer = Buffer.from(arrayBuffer);
 
         const uploadResult = await new Promise((resolve, reject) => {
-            cloudinary.uploader.upload_stream({ resource_type: 'image', folder: 'DevEvent' }, (error, results) => {
+            cloudinary.uploader.upload_stream({ resource_type: 'image', folder: 'events' }, (error, results) => {
                 if(error) return reject(error);
 
                 resolve(results);
