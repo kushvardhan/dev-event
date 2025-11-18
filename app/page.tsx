@@ -1,6 +1,7 @@
 import EventCard from "@/components/EventCard";
 import ExploreBtn from "@/components/ExploreBtn";
 import { IEvent } from "@/database";
+import { getAllEvents } from "@/lib/actions/event.actions";
 // import { events } from "@/lib/constants";
 
 
@@ -13,12 +14,11 @@ import { IEvent } from "@/database";
 //   {id:6, image:'/images/event6.png', title:'Event 6', slug:'event-6', location:'location-6',date:'date-6', time:'Time-6'},
 
 // ]
-const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL
-export default async function Home() {
-  const response = await fetch(`${BASE_URL}/api/events`);
 
-  const data = await response.json();
-  const events = data.events || [];
+
+export default async function Home() {
+    const events = await getAllEvents();
+
 
   return (
     <section>
@@ -31,8 +31,8 @@ export default async function Home() {
           <h3>Featured Events</h3>
 
           <ul className="events">
-            {events && events.length > 0 && events.map((events:IEvent)=>(
-              <li key={events.title}><EventCard {...events} /></li>
+            {events && events.length > 0 && events.map((events:IEvent,index)=>(
+              <li key={index}><EventCard {...events} /></li>
             ))}
           </ul>
 

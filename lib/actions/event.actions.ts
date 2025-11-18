@@ -22,3 +22,14 @@ export const getSimilarEventsBySlug = async (slug: string): Promise<IEvent[]> =>
     return [];
   }
 };
+
+export const getAllEvents = async (): Promise<IEvent[]> => {
+  try {
+    await connectDB();
+    const events = await Event.find().lean<IEvent[]>();
+    return events;
+  } catch (err) {
+    console.log("Get events error:", err);
+    return [];
+  }
+};
