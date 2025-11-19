@@ -30,7 +30,7 @@ export const getAllEvents = async (): Promise<IEvent[]> => {
   try {
     await connectDB();
     const events = await Event.find().lean<IEvent[]>();
-    return events;
+    return events.map((event) => JSON.parse(JSON.stringify(event)));
   } catch (err) {
     console.log("Get events error:", err);
     return [];
