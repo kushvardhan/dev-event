@@ -1,9 +1,11 @@
-'use server';
+"use server";
 
-import Event, { IEvent } from '@/database/event.model';
+import Event, { IEvent } from "@/database/event.model";
 import connectDB from "@/lib/mongodb";
 
-export const getSimilarEventsBySlug = async (slug: string): Promise<IEvent[]> => {
+export const getSimilarEventsBySlug = async (
+  slug: string
+): Promise<IEvent[]> => {
   try {
     await connectDB();
 
@@ -13,7 +15,7 @@ export const getSimilarEventsBySlug = async (slug: string): Promise<IEvent[]> =>
 
     const similarEvents = await Event.find({
       _id: { $ne: event._id },
-      tags: { $in: event.tags }
+      tags: { $in: event.tags },
     }).lean<IEvent[]>();
 
     return similarEvents;
@@ -24,6 +26,7 @@ export const getSimilarEventsBySlug = async (slug: string): Promise<IEvent[]> =>
 };
 
 export const getAllEvents = async (): Promise<IEvent[]> => {
+  "use cache";
   try {
     await connectDB();
     const events = await Event.find().lean<IEvent[]>();
